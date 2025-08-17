@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBT Periodic Table</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e  50%, #2d1b69 100%);
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #64ffda, #40c4ff, #448aff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #b39ddb;
+            margin-bottom: 20px;
+        }
+
+        .mbt-equation {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #64ffda;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.3em;
+            backdrop-filter: blur(10px);
+        }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 3px;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .element {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            min-height: 70px;
+        }
+
+        .element:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(100, 255, 218, 0.5);
+            border-color: #64ffda;
+        }
+
+        .element.selected {
+            border-color: #ffab40;
+            box-shadow: 0 0 15px rgba(255, 171, 64, 0.7);
+        }
+
+        .atomic-number {
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .symbol {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 2px 0;
+        }
+
+        .mbt-class {
+            font-size: 0.6em;
+            opacity: 0.8;
+        }
+
+        /* MBT Classification Colors */
+        .curvature-core { background: linear-gradient(135deg, #ff4081, #e91e63); }
+        .motion-shell { background: linear-gradient(135deg, #40c4ff, #2196f3); }
+        .memory-anchor { background: linear-gradient(135deg, #64ffda, #00bcd4); }
+        .spiral-transition { background: linear-gradient(135deg, #ffab40, #ff9800); }
+        .echo-resonant { background: linear-gradient(135deg, #ab47bc, #9c27b0); }
+        .field-drift { background: linear-gradient(135deg, #66bb6a, #4caf50); }
+        .quantum-bridge { background: linear-gradient(135deg, #ffa726, #ff8f00); }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            margin-right: 10px;
+        }
+
+        .details-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 2px solid #64ffda;
+            min-height: 200px;
+        }
+
+        .empty {
+            opacity: 0;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #64ffda, #40c4ff);
+            border: none;
+            color: #0f0f23;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 255, 218, 0.4);
+        }
+
+        .mbt-property {
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 1200px) {
+            .periodic-table {
+                grid-template-columns: repeat(9, 1fr);
+            }
+            .element {
+                min-height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">MBT Periodic Table</div>
+            <div class="subtitle">Motion-Based Theory Element Classification</div>
+            <div class="mbt-equation">
+                Ψ(Z,r,v,ω,t) = C(r) × R(v) × Ω(ω) × T(t) × Z_curvature
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="highlightClass('curvature-core')">Curvature Core</button>
+            <button class="btn" onclick="highlightClass('motion-shell')">Motion Shell</button>
+            <button class="btn" onclick="highlightClass('memory-anchor')">Memory Anchor</button>
+            <button class="btn" onclick="highlightClass('spiral-transition')">Spiral Transition</button>
+            <button class="btn" onclick="highlightClass('echo-resonant')">Echo Resonant</button>
+            <button class="btn" onclick="clearHighlight()">Show All</button>
+        </div>
+
+        <div class="periodic-table" id="periodicTable"></div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color curvature-core"></div>
+                <div>
+                    <strong>Curvature Core</strong><br>
+                    High nuclear binding, stable curvature wells
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color motion-shell"></div>
+                <div>
+                    <strong>Motion Shell</strong><br>
+                    Dynamic electron motion, variable valence
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color memory-anchor"></div>
+                <div>
+                    <strong>Memory Anchor</strong><br>
+                    Stable configurations, memory persistence
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color spiral-transition"></div>
+                <div>
+                    <strong>Spiral Transition</strong><br>
+                    d-orbital complexity, metal properties
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color echo-resonant"></div>
+                <div>
+                    <strong>Echo Resonant</strong><br>
+                    f-orbital patterns, lanthanide/actinide
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color field-drift"></div>
+                <div>
+                    <strong>Field Drift</strong><br>
+                    Noble gases, minimal field interaction
+                </div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color quantum-bridge"></div>
+                <div>
+                    <strong>Quantum Bridge</strong><br>
+                    Synthetic elements, unstable curvature
+                </div>
+            </div>
+        </div>
+
+        <div class="details-panel" id="detailsPanel">
+            <h3>MBT Element Analysis</h3>
+            <p>Click on any element to see its Motion-Based Theory properties and characteristics.</p>
+            <div id="elementDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const elements = [
+            // Period 1
+            {z: 1, symbol: 'H', name: 'Hydrogen', mbtClass: 'curvature-core', row: 1, col: 1,
+             mbtProps: {
+                 curvature: 'Minimal - single proton well',
+                 motion: 'Simple spherical electron motion',
+                 memory: 'No electron-electron memory',
+                 resonance: 'Perfect 1s orbital resonance'
+             }},
+            {z: 2, symbol: 'He', name: 'Helium', mbtClass: 'field-drift', row: 1, col: 18,
+             mbtProps: {
+                 curvature: 'Closed shell, minimal interaction',
+                 motion: 'Paired electron counter-rotation',
+                 memory: 'Complete shell memory stability',
+                 resonance: 'Noble gas field isolation'
+             }},
+
+            // Period 2
+            {z: 3, symbol: 'Li', name: 'Lithium', mbtClass: 'motion-shell', row: 2, col: 1},
+            {z: 4, symbol: 'Be', name: 'Beryllium', mbtClass: 'memory-anchor', row: 2, col: 2},
+            {z: 5, symbol: 'B', name: 'Boron', mbtClass: 'motion-shell', row: 2, col: 13},
+            {z: 6, symbol: 'C', name: 'Carbon', mbtClass: 'curvature-core', row: 2, col: 14,
+             mbtProps: {
+                 curvature: 'Tetrahedral bonding geometry',
+                 motion: 'sp3 hybridized motion states',
+                 memory: 'Strong C-C bond memory',
+                 resonance: 'Diamond/graphite polymorphism'
+             }},
+            {z: 7, symbol: 'N', name: 'Nitrogen', mbtClass: 'motion-shell', row: 2, col: 15},
+            {z: 8, symbol: 'O', name: 'Oxygen', mbtClass: 'curvature-core', row: 2, col: 16},
+            {z: 9, symbol: 'F', name: 'Fluorine', mbtClass: 'motion-shell', row: 2, col: 17},
+            {z: 10, symbol: 'Ne', name: 'Neon', mbtClass: 'field-drift', row: 2, col: 18},
+
+            // Period 3
+            {z: 11, symbol: 'Na', name: 'Sodium', mbtClass: 'motion-shell', row: 3, col: 1},
+            {z: 12, symbol: 'Mg', name: 'Magnesium', mbtClass: 'memory-anchor', row: 3, col: 2},
+            {z: 13, symbol: 'Al', name: 'Aluminum', mbtClass: 'spiral-transition', row: 3, col: 13},
+            {z: 14, symbol: 'Si', name: 'Silicon', mbtClass: 'curvature-core', row: 3, col: 14},
+            {z: 15, symbol: 'P', name: 'Phosphorus', mbtClass: 'motion-shell', row: 3, col: 15},
+            {z: 16, symbol: 'S', name: 'Sulfur', mbtClass: 'curvature-core', row: 3, col: 16},
+            {z: 17, symbol: 'Cl', name: 'Chlorine', mbtClass: 'motion-shell', row: 3, col: 17},
+            {z: 18, symbol: 'Ar', name: 'Argon', mbtClass: 'field-drift', row: 3, col: 18},
+
+            // Period 4 - First transition series
+            {z: 19, symbol: 'K', name: 'Potassium', mbtClass: 'motion-shell', row: 4, col: 1},
+            {z: 20, symbol: 'Ca', name: 'Calcium', mbtClass: 'memory-anchor', row: 4, col: 2},
+            {z: 21, symbol: 'Sc', name: 'Scandium', mbtClass: 'spiral-transition', row: 4, col: 3},
+            {z: 22, symbol: 'Ti', name: 'Titanium', mbtClass: 'spiral-transition', row: 4, col: 4},
+            {z: 23, symbol: 'V', name: 'Vanadium', mbtClass: 'spiral-transition', row: 4, col: 5},
+            {z: 24, symbol: 'Cr', name: 'Chromium', mbtClass: 'spiral-transition', row: 4, col: 6},
+            {z: 25, symbol: 'Mn', name: 'Manganese', mbtClass: 'spiral-transition', row: 4, col: 7},
+            {z: 26, symbol: 'Fe', name: 'Iron', mbtClass: 'spiral-transition', row: 4, col: 8,
+             mbtProps: {
+                 curvature: 'Complex d-orbital field geometry',
+                 motion: 'Magnetic spin alignment patterns',
+                 memory: 'Ferromagnetic domain memory',
+                 resonance: 'Multiple oxidation state stability'
+             }},
+            {z: 27, symbol: 'Co', name: 'Cobalt', mbtClass: 'spiral-transition', row: 4, col: 9},
+            {z: 28, symbol: 'Ni', name: 'Nickel', mbtClass: 'spiral-transition', row: 4, col: 10},
+            {z: 29, symbol: 'Cu', name: 'Copper', mbtClass: 'spiral-transition', row: 4, col: 11},
+            {z: 30, symbol: 'Zn', name: 'Zinc', mbtClass: 'memory-anchor', row: 4, col: 12},
+            {z: 31, symbol: 'Ga', name: 'Gallium', mbtClass: 'motion-shell', row: 4, col: 13},
+            {z: 32, symbol: 'Ge', name: 'Germanium', mbtClass: 'curvature-core', row: 4, col: 14},
+            {z: 33, symbol: 'As', name: 'Arsenic', mbtClass: 'motion-shell', row: 4, col: 15},
+            {z: 34, symbol: 'Se', name: 'Selenium', mbtClass: 'curvature-core', row: 4, col: 16},
+            {z: 35, symbol: 'Br', name: 'Bromine', mbtClass: 'motion-shell', row: 4, col: 17},
+            {z: 36, symbol: 'Kr', name: 'Krypton', mbtClass: 'field-drift', row: 4, col: 18},
+
+            // Add more periods...
+            // Period 5
+            {z: 37, symbol: 'Rb', name: 'Rubidium', mbtClass: 'motion-shell', row: 5, col: 1},
+            {z: 38, symbol: 'Sr', name: 'Strontium', mbtClass: 'memory-anchor', row: 5, col: 2},
+            {z: 39, symbol: 'Y', name: 'Yttrium', mbtClass: 'spiral-transition', row: 5, col: 3},
+            {z: 40, symbol: 'Zr', name: 'Zirconium', mbtClass: 'spiral-transition', row: 5, col: 4},
+            {z: 41, symbol: 'Nb', name: 'Niobium', mbtClass: 'spiral-transition', row: 5, col: 5},
+            {z: 42, symbol: 'Mo', name: 'Molybdenum', mbtClass: 'spiral-transition', row: 5, col: 6},
+            {z: 43, symbol: 'Tc', name: 'Technetium', mbtClass: 'quantum-bridge', row: 5, col: 7},
+            {z: 44, symbol: 'Ru', name: 'Ruthenium', mbtClass: 'spiral-transition', row: 5, col: 8},
+            {z: 45, symbol: 'Rh', name: 'Rhodium', mbtClass: 'spiral-transition', row: 5, col: 9},
+            {z: 46, symbol: 'Pd', name: 'Palladium', mbtClass: 'spiral-transition', row: 5, col: 10},
+            {z: 47, symbol: 'Ag', name: 'Silver', mbtClass: 'spiral-transition', row: 5, col: 11},
+            {z: 48, symbol: 'Cd', name: 'Cadmium', mbtClass: 'memory-anchor', row: 5, col: 12},
+            {z: 49, symbol: 'In', name: 'Indium', mbtClass: 'motion-shell', row: 5, col: 13},
+            {z: 50, symbol: 'Sn', name: 'Tin', mbtClass: 'curvature-core', row: 5, col: 14},
+            {z: 51, symbol: 'Sb', name: 'Antimony', mbtClass: 'motion-shell', row: 5, col: 15},
+            {z: 52, symbol: 'Te', name: 'Tellurium', mbtClass: 'curvature-core', row: 5, col: 16},
+            {z: 53, symbol: 'I', name: 'Iodine', mbtClass: 'motion-shell', row: 5, col: 17},
+            {z: 54, symbol: 'Xe', name: 'Xenon', mbtClass: 'field-drift', row: 5, col: 18},
+
+            // Period 6 & Lanthanides
+            {z: 55, symbol: 'Cs', name: 'Cesium', mbtClass: 'motion-shell', row: 6, col: 1},
+            {z: 56, symbol: 'Ba', name: 'Barium', mbtClass: 'memory-anchor', row: 6, col: 2},
+            {z: 57, symbol: 'La', name: 'Lanthanum', mbtClass: 'echo-resonant', row: 6, col: 3},
+            
+            // Lanthanides (f-block)
+            {z: 58, symbol: 'Ce', name: 'Cerium', mbtClass: 'echo-resonant', row: 8, col: 4},
+            {z: 59, symbol: 'Pr', name: 'Praseodymium', mbtClass: 'echo-resonant', row: 8, col: 5},
+            {z: 60, symbol: 'Nd', name: 'Neodymium', mbtClass: 'echo-resonant', row: 8, col: 6},
+            {z: 61, symbol: 'Pm', name: 'Promethium', mbtClass: 'quantum-bridge', row: 8, col: 7},
+            {z: 62, symbol: 'Sm', name: 'Samarium', mbtClass: 'echo-resonant', row: 8, col: 8},
+            {z: 63, symbol: 'Eu', name: 'Europium', mbtClass: 'echo-resonant', row: 8, col: 9},
+            {z: 64, symbol: 'Gd', name: 'Gadolinium', mbtClass: 'echo-resonant', row: 8, col: 10},
+            
+            // Continue with more elements...
+            {z: 72, symbol: 'Hf', name: 'Hafnium', mbtClass: 'spiral-transition', row: 6, col: 4},
+            {z: 73, symbol: 'Ta', name: 'Tantalum', mbtClass: 'spiral-transition', row: 6, col: 5},
+            {z: 74, symbol: 'W', name: 'Tungsten', mbtClass: 'spiral-transition', row: 6, col: 6},
+            {z: 75, symbol: 'Re', name: 'Rhenium', mbtClass: 'spiral-transition', row: 6, col: 7},
+            {z: 76, symbol: 'Os', name: 'Osmium', mbtClass: 'spiral-transition', row: 6, col: 8},
+            {z: 77, symbol: 'Ir', name: 'Iridium', mbtClass: 'spiral-transition', row: 6, col: 9},
+            {z: 78, symbol: 'Pt', name: 'Platinum', mbtClass: 'spiral-transition', row: 6, col: 10},
+            {z: 79, symbol: 'Au', name: 'Gold', mbtClass: 'spiral-transition', row: 6, col: 11,
+             mbtProps: {
+                 curvature: 'Relativistic d-orbital contraction',
+                 motion: 'Stable 5d10 electron configuration',
+                 memory: 'Chemical inertness from filled d-shells',
+                 resonance: 'Golden color from relativistic effects'
+             }},
+            {z: 80, symbol: 'Hg', name: 'Mercury', mbtClass: 'memory-anchor', row: 6, col: 12},
+            {z: 81, symbol: 'Tl', name: 'Thallium', mbtClass: 'motion-shell', row: 6, col: 13},
+            {z: 82, symbol: 'Pb', name: 'Lead', mbtClass: 'curvature-core', row: 6, col: 14},
+            {z: 83, symbol: 'Bi', name: 'Bismuth', mbtClass: 'motion-shell', row: 6, col: 15},
+            {z: 84, symbol: 'Po', name: 'Polonium', mbtClass: 'quantum-bridge', row: 6, col: 16},
+            {z: 85, symbol: 'At', name: 'Astatine', mbtClass: 'quantum-bridge', row: 6, col: 17},
+            {z: 86, symbol: 'Rn', name: 'Radon', mbtClass: 'field-drift', row: 6, col: 18},
+
+            // Period 7 & Actinides
+            {z: 87, symbol: 'Fr', name: 'Francium', mbtClass: 'quantum-bridge', row: 7, col: 1},
+            {z: 88, symbol: 'Ra', name: 'Radium', mbtClass: 'quantum-bridge', row: 7, col: 2},
+            {z: 89, symbol: 'Ac', name: 'Actinium', mbtClass: 'echo-resonant', row: 7, col: 3},
+            
+            // Actinides
+            {z: 90, symbol: 'Th', name: 'Thorium', mbtClass: 'echo-resonant', row: 9, col: 4},
+            {z: 91, symbol: 'Pa', name: 'Protactinium', mbtClass: 'echo-resonant', row: 9, col: 5},
+            {z: 92, symbol: 'U', name: 'Uranium', mbtClass: 'echo-resonant', row: 9, col: 6,
+             mbtProps: {
+                 curvature: 'Complex 5f orbital patterns',
+                 motion: 'Nuclear instability from curvature stress',
+                 memory: 'Radioactive decay memory chains',
+                 resonance: 'Fissile f-electron resonance states'
+             }},
+            {z: 93, symbol: 'Np', name: 'Neptunium', mbtClass: 'quantum-bridge', row: 9, col: 7},
+            {z: 94, symbol: 'Pu', name: 'Plutonium', mbtClass: 'quantum-bridge', row: 9, col: 8},
+            
+            // Super-heavy elements
+            {z: 104, symbol: 'Rf', name: 'Rutherfordium', mbtClass: 'quantum-bridge', row: 7, col: 4},
+            {z: 105, symbol: 'Db', name: 'Dubnium', mbtClass: 'quantum-bridge', row: 7, col: 5},
+            {z: 106, symbol: 'Sg', name: 'Seaborgium', mbtClass: 'quantum-bridge', row: 7, col: 6},
+            {z: 107, symbol: 'Bh', name: 'Bohrium', mbtClass: 'quantum-bridge', row: 7, col: 7},
+            {z: 108, symbol: 'Hs', name: 'Hassium', mbtClass: 'quantum-bridge', row: 7, col: 8},
+            {z: 109, symbol: 'Mt', name: 'Meitnerium', mbtClass: 'quantum-bridge', row: 7, col: 9},
+            {z: 110, symbol: 'Ds', name: 'Darmstadtium', mbtClass: 'quantum-bridge', row: 7, col: 10},
+            {z: 111, symbol: 'Rg', name: 'Roentgenium', mbtClass: 'quantum-bridge', row: 7, col: 11},
+            {z: 112, symbol: 'Cn', name: 'Copernicium', mbtClass: 'quantum-bridge', row: 7, col: 12},
+            {z: 113, symbol: 'Nh', name: 'Nihonium', mbtClass: 'quantum-bridge', row: 7, col: 13},
+            {z: 114, symbol: 'Fl', name: 'Flerovium', mbtClass: 'quantum-bridge', row: 7, col: 14},
+            {z: 115, symbol: 'Mc', name: 'Moscovium', mbtClass: 'quantum-bridge', row: 7, col: 15},
+            {z: 116, symbol: 'Lv', name: 'Livermorium', mbtClass: 'quantum-bridge', row: 7, col: 16},
+            {z: 117, symbol: 'Ts', name: 'Tennessine', mbtClass: 'quantum-bridge', row: 7, col: 17},
+            {z: 118, symbol: 'Og', name: 'Oganesson', mbtClass: 'quantum-bridge', row: 7, col: 18}
+        ];
+
+        function createPeriodicTable() {
+            const table = document.getElementById('periodicTable');
+            
+            // Create a 9x18 grid (including lanthanide/actinide rows)
+            for (let row = 1; row <= 9; row++) {
+                for (let col = 1; col <= 18; col++) {
+                    const element = elements.find(el => el.row === row && el.col === col);
+                    const div = document.createElement('div');
+                    
+                    if (element) {
+                        div.className = `element ${element.mbtClass}`;
+                        div.innerHTML = `
+                            <div class="atomic-number">${element.z}</div>
+                            <div class="symbol">${element.symbol}</div>
+                            <div class="mbt-class">${element.mbtClass.replace('-', ' ')}</div>
+                        `;
+                        div.onclick = () => showElementDetails(element);
+                    } else {
+                        div.className = 'element empty';
+                    }
+                    
+                    table.appendChild(div);
+                }
+            }
+        }
+
+        function showElementDetails(element) {
+            // Clear previous selection
+            document.querySelectorAll('.element.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Select current element
+            event.target.closest('.element').classList.add('selected');
+            
+            const detailsDiv = document.getElementById('elementDetails');
+            const defaultProps = {
+                curvature: 'Standard atomic curvature well',
+                motion: 'Typical electron orbital motion',
+                memory: 'Standard shell memory effects',
+                resonance: 'Normal energy level spacing'
+            };
+            
+            const props = element.mbtProps || defaultProps;
+            
+            detailsDiv.innerHTML = `
+                <h2>${element.name} (${element.symbol})</h2>
+                <p><strong>Atomic Number:</strong> ${element.z}</p>
+                <p><strong>MBT Classification:</strong> ${element.mbtClass.replace('-', ' ').toUpperCase()}</p>
+                
+                <h3>MBT Properties:</h3>
+                <div class="mbt-property">
+                    <strong>Curvature Field:</strong> ${props.curvature}
+                </div>
+                <div class="mbt-property">
+                    <strong>Motion Dynamics:</strong> ${props.motion}
+                </div>
+                <div class="mbt-property">
+                    <strong>Memory Effects:</strong> ${props.memory}
+                </div>
+                <div class="mbt-property">
+                    <strong>Resonance Pattern:</strong> ${props.resonance}
+                </div>
+                
+                <h3>MBT Predictions:</h3>
+                <div class="mbt-property">
+                    <strong>Stability Index:</strong> ${calculateStabilityIndex(element)}
+                </div>
+                <div class="mbt-property">
+                    <strong>Curvature Strength:</strong> ${calculateCurvatureStrength(element)}
+                </div>
+                <div class="mbt-property">
+                    <strong>Motion Complexity:</strong> ${calculateMotionComplexity(element)}
+                </div>
+            `;
+        }
+
+        function calculateStabilityIndex(element) {
+            // MBT stability based on curvature well depth and electron configuration
+            const magicNumbers = [2, 10, 18, 36, 54, 86, 118];
+            const nearestMagic = magicNumbers.reduce((prev, curr) => 
+                Math.abs(curr - element.z) < Math.abs(prev - element.z) ? curr : prev
+            );
+            const distance = Math.abs(element.z - nearestMagic);
+            const stability = Math.max(0, 100 - distance * 3);
+            
+            if (element.mbtClass === 'field-drift') return `${stability + 20}/100 (Noble gas stability)`;
+            if (element.mbtClass === 'quantum-bridge') return `${Math.min(stability, 30)}/100 (Synthetic instability)`;
+            if (element.mbtClass === 'memory-anchor') return `${stability + 10}/100 (Enhanced by memory)`;
+            
+            return `${stability}/100`;
+        }
+
+        function calculateCurvatureStrength(element) {
+            // Curvature strength increases with nuclear charge but decreases with shell shielding
+            const baseStrength = Math.sqrt(element.z) * 10;
+            const shielding = Math.floor((element.z - 1) / 8) * 5; // Rough shell estimate
+            const netStrength = Math.max(10, baseStrength - shielding);
+            
+            if (element.mbtClass === 'curvature-core') return `${netStrength + 20} (Strong binding)`;
+            if (element.mbtClass === 'spiral-transition') return `${netStrength + 10} (d-orbital complexity)`;
+            if (element.mbtClass === 'echo-resonant') return `${netStrength + 15} (f-orbital resonance)`;
+            
+            return `${netStrength}`;
+        }
+
+        function calculateMotionComplexity(element) {
+            // Motion complexity based on electron configuration and orbital types
+            let complexity = 0;
+            
+            // s-block: simple
+            if (element.col <= 2) complexity += 10;
+            // p-block: moderate
+            if (element.col >= 13 && element.col <= 18) complexity += 20;
+            // d-block: complex
+            if (element.col >= 3 && element.col <= 12) complexity += 40;
+            // f-block: very complex
+            if (element.row >= 8) complexity += 60;
+            
+            // Add complexity for heavy elements
+            complexity += Math.floor(element.z / 20) * 5;
+            
+            if (complexity < 20) return `${complexity} (Simple s-orbital motion)`;
+            if (complexity < 40) return `${complexity} (Moderate p-orbital patterns)`;
+            if (complexity < 60) return `${complexity} (Complex d-orbital dynamics)`;
+            return `${complexity} (Highly complex f-orbital resonance)`;
+        }
+
+        function highlightClass(className) {
+            // Hide all elements
+            document.querySelectorAll('.element').forEach(el => {
+                el.style.opacity = '0.2';
+                el.style.transform = 'scale(0.8)';
+            });
+            
+            // Show only selected class
+            document.querySelectorAll(`.${className}`).forEach(el => {
+                el.style.opacity = '1';
+                el.style.transform = 'scale(1)';
+            });
+        }
+
+        function clearHighlight() {
+            document.querySelectorAll('.element').forEach(el => {
+                el.style.opacity = '1';
+                el.style.transform = 'scale(1)';
+            });
+        }
+
+        // Initialize the periodic table
+        createPeriodicTable();
+
+        // Add some dynamic MBT field visualization
+        function addFieldVisualization() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes curvatureFlow {
+                    0% { box-shadow: 0 0 5px rgba(255, 64, 129, 0.3); }
+                    50% { box-shadow: 0 0 20px rgba(255, 64, 129, 0.7); }
+                    100% { box-shadow: 0 0 5px rgba(255, 64, 129, 0.3); }
+                }
+                
+                @keyframes motionFlow {
+                    0% { box-shadow: 0 0 5px rgba(64, 196, 255, 0.3); }
+                    50% { box-shadow: 0 0 20px rgba(64, 196, 255, 0.7); }
+                    100% { box-shadow: 0 0 5px rgba(64, 196, 255, 0.3); }
+                }
+                
+                @keyframes memoryFlow {
+                    0% { box-shadow: 0 0 5px rgba(100, 255, 218, 0.3); }
+                    50% { box-shadow: 0 0 20px rgba(100, 255, 218, 0.7); }
+                    100% { box-shadow: 0 0 5px rgba(100, 255, 218, 0.3); }
+                }
+                
+                @keyframes spiralFlow {
+                    0% { box-shadow: 0 0 5px rgba(255, 171, 64, 0.3); }
+                    50% { box-shadow: 0 0 20px rgba(255, 171, 64, 0.7); }
+                    100% { box-shadow: 0 0 5px rgba(255, 171, 64, 0.3); }
+                }
+                
+                @keyframes echoFlow {
+                    0% { box-shadow: 0 0 5px rgba(171, 71, 188, 0.3); }
+                    50% { box-shadow: 0 0 20px rgba(171, 71, 188, 0.7); }
+                    100% { box-shadow: 0 0 5px rgba(171, 71, 188, 0.3); }
+                }
+                
+                .curvature-core { animation: curvatureFlow 3s ease-in-out infinite; }
+                .motion-shell { animation: motionFlow 2.5s ease-in-out infinite; }
+                .memory-anchor { animation: memoryFlow 4s ease-in-out infinite; }
+                .spiral-transition { animation: spiralFlow 2s ease-in-out infinite; }
+                .echo-resonant { animation: echoFlow 3.5s ease-in-out infinite; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Add field visualization after a short delay
+        setTimeout(addFieldVisualization, 1000);
+
+        // Add theoretical MBT predictions panel
+        function addMBTPredictions() {
+            const predictionsDiv = document.createElement('div');
+            predictionsDiv.className = 'details-panel';
+            predictionsDiv.innerHTML = `
+                <h3>🌟 MBT Theoretical Predictions</h3>
+                
+                <div class="mbt-property">
+                    <strong>Island of Stability (Z=114-126):</strong> Enhanced curvature wells from shell closure effects. Elements 114, 120, 126 predicted to have extended half-lives due to spherical shell magic numbers creating stable curvature geometry.
+                </div>
+                
+                <div class="mbt-property">
+                    <strong>Super-Heavy Noble Gas (Z=118, Oganesson):</strong> MBT predicts incomplete field drift behavior due to relativistic curvature effects. May show metallic properties despite noble gas electron configuration.
+                </div>
+                
+                <div class="mbt-property">
+                    <strong>Electron Shell Anomalies:</strong> Elements beyond Z=100 show curvature-driven orbital inversions. 7p orbitals may fill before 6d completion due to relativistic motion-curvature coupling.
+                </div>
+                
+                <div class="mbt-property">
+                    <strong>Chemical Property Predictions:</strong>
+                    <br>• Z=119: Extreme motion-shell behavior, high reactivity
+                    <br>• Z=120: Memory-anchor with alkaline earth-like properties  
+                    <br>• Z=121: Novel spiral-transition beginning superheavy d-block
+                    <br>• Z=126: Potential echo-resonant with unique f-orbital patterns
+                </div>
+                
+                <div class="mbt-property">
+                    <strong>Neutron Magic Numbers:</strong> MBT curvature theory predicts N=184 as next major shell closure, corresponding to Z=114-126 region for maximum stability through balanced proton-neutron curvature fields.
+                </div>
+                
+                <div class="mbt-property">
+                    <strong>Beyond Current Elements:</strong> Elements Z=130+ enter "quantum-bridge collapse" regime where curvature fields become too complex for stable geometry. Natural limit around Z=140-150 due to curvature stress.
+                </div>
+            `;
+            
+            document.querySelector('.container').appendChild(predictionsDiv);
+        }
+
+        addMBTPredictions();
+    </script>
+</body>
+</html>
